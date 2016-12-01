@@ -46,10 +46,8 @@ Resources:
         Statement:
         - Effect: 'Allow'
           Principal:
-            Service:
-            - 'iot.amazonaws.com'
-          Action:
-          - 'sts:AssumeRole'
+            Service: 'iot.amazonaws.com'
+          Action: 'sts:AssumeRole'
       Policies:
       - PolicyName: 'dynamodb'
         PolicyDocument: 
@@ -103,10 +101,8 @@ Resources:
         Statement:
         - Effect: 'Allow'
           Principal:
-            Service:
-            - 'iot.amazonaws.com'
-          Action:
-          - 'sts:AssumeRole'
+            Service: 'iot.amazonaws.com'
+          Action: 'sts:AssumeRole'
       Policies:
       - PolicyName: 's3'
         PolicyDocument: 
@@ -126,10 +122,8 @@ Resources:
         Statement:
         - Effect: 'Allow'
           Principal:
-            Service:
-            - 'iot.amazonaws.com'
-          Action:
-          - 'sts:AssumeRole'
+            Service: 'iot.amazonaws.com'
+          Action: 'sts:AssumeRole'
       Policies:
       - PolicyName: 's3'
         PolicyDocument: 
