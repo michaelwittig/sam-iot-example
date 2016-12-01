@@ -2,7 +2,7 @@
 
 ## Installation
 
-Make sure to update the AWS CLI, otherwise you may not have support for SAM:
+Make sure to update the AWS CLI. Otherwise, you may not have support for SAM:
 
 ```
 sudo pip install --upgrade awscli
@@ -31,7 +31,7 @@ Done.
 5. Go to https://console.aws.amazon.com/dynamodb/
 6. Select `Tables`
 7. Select the table that starts with `sam-iot-example-EventTable-`
-8. Click on Items and you would see a few events
+8. Click on Items, and you would see a few events
 9. Go to https://console.aws.amazon.com/s3/
 10. Select the bucket that starts with `sam-iot-example-archivefraudbucket-`
 11. You should see a few fraud events
