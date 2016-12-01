@@ -1,0 +1,156 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Resources:
+  EventApiLambda:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: 'event-api-handler.create'
+      Runtime: 'nodejs4.3'
+      Policies:
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: 'iot:Publish'
+          Resource: !Sub 'arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topic/event/*'
+        - Effect: Allow
+          Action: 'iot:DescribeEndpoint'
+          Resource: '*'
+      Events:
+        Http:
+          Type: Api
+          Properties:
+            Path: /event
+            Method: post
+  EventTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      - AttributeName: timestamp
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      - AttributeName: timestamp
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+  EventTableRole:
+    Type: 'AWS::IAM::Role'
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: 'Allow'
+          Principal:
+            Service:
+            - 'iot.amazonaws.com'
+          Action:
+          - 'sts:AssumeRole'
+      Policies:
+      - PolicyName: 'dynamodb'
+        PolicyDocument: 
+          Version: '2012-10-17'
+          Statement: 
+          - Effect: Allow
+            Action: 'dynamodb:PutItem'
+            Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${EventTable}'
+  EventTableRule:
+    Type: 'AWS::IoT::TopicRule'
+    Properties:
+      TopicRulePayload:
+        Actions:
+        - DynamoDB:
+            HashKeyField: id
+            HashKeyValue: '${id}'
+            RangeKeyField: timestamp # unfortunately this field is required by CloudFormation
+            RangeKeyValue: '${timestamp()}' # unfortunately this field is required by CloudFormation
+            RoleArn: !GetAtt 'EventTableRole.Arn'
+            TableName: !Ref EventTable
+        RuleDisabled: false
+        Sql: "SELECT * FROM 'event/+'"
+  BuyEventLambda:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: 'buy-event-handler.analyze'
+      Runtime: 'nodejs4.3'
+      Policies:
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: 'iot:Publish'
+          Resource: !Sub 'arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topic/alert/fraud'
+        - Effect: Allow
+          Action: 'iot:DescribeEndpoint'
+          Resource: '*'
+      Events:
+        IoT:
+          Type: IoTRule
+          Properties:
+            Sql: "SELECT * FROM 'event/buy'"
+            AwsIotSqlVersion: '2016-03-23'
+  ArchiveFraudBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties: {}
+  ArchiveFraudS3Role:
+    Type: 'AWS::IAM::Role'
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: 'Allow'
+          Principal:
+            Service:
+            - 'iot.amazonaws.com'
+          Action:
+          - 'sts:AssumeRole'
+      Policies:
+      - PolicyName: 's3'
+        PolicyDocument: 
+          Version: '2012-10-17'
+          Statement: 
+          - Effect: Allow
+            Action: 's3:PutObject'
+            Resource: !Sub 'arn:aws:s3:::${ArchiveFraudBucket}/*'
+  ArchiveFraudTopic:
+    Type: 'AWS::SNS::Topic'
+    Properties: {}
+  ArchiveFraudTopicRole:
+    Type: 'AWS::IAM::Role'
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: 'Allow'
+          Principal:
+            Service:
+            - 'iot.amazonaws.com'
+          Action:
+          - 'sts:AssumeRole'
+      Policies:
+      - PolicyName: 's3'
+        PolicyDocument: 
+          Version: '2012-10-17'
+          Statement: 
+          - Effect: Allow
+            Action: 'sns:Publish'
+            Resource: !Ref ArchiveFraudTopic
+  ArchiveFraudRule:
+    Type: 'AWS::IoT::TopicRule'
+    Properties:
+      TopicRulePayload:
+        Actions:
+        - S3:
+            BucketName: !Ref ArchiveFraudBucket
+            Key: '${id}.json'
+            RoleArn: !GetAtt 'ArchiveFraudS3Role.Arn'
+        - Sns:
+            MessageFormat: RAW
+            RoleArn: !GetAtt 'ArchiveFraudTopicRole.Arn'
+            TargetArn: !Ref ArchiveFraudTopic
+        AwsIotSqlVersion: '2016-03-23'
+        RuleDisabled: false
+        Sql: "SELECT * FROM 'alert/fraud'"

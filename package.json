@@ -1,0 +1,12 @@
+{
+  "name": "sam-iot-example",
+  "version": "1.0.0",
+  "author": "Michael Wittig",
+  "license": "MIT",
+  "dependencies": {
+    "uuid": "3.0.1"
+  },
+  "devDependencies": {
+    "aws-sdk": "2.6.9"
+  }
+}
