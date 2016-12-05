@@ -8,13 +8,26 @@ Make sure to update the AWS CLI. Otherwise, you may not have support for SAM:
 sudo pip install --upgrade awscli
 ```
 
+Select a region that supports the IoT service
+
+```
+export AWS_DEFAULT_REGION=us-east-1
+```
+
 Then create a artifacts bucket:
 
 ```
 aws s3 mb s3://$USER-artifacts
 ```
 
-Then deploy the template using SAM and this little helpher Bash script:
+Clone this repository:
+
+```
+git clone git@github.com:michaelwittig/sam-iot-example.git
+cd sam-iot-example/
+```
+
+Then deploy the template using SAM and this little helper Bash script:
 
 ```
 ./deploy.sh
