@@ -6,7 +6,7 @@ Resources:
     Type: 'AWS::Serverless::Function'
     Properties:
       Handler: 'event-api-handler.create'
-      Runtime: 'nodejs4.3'
+      Runtime: 'nodejs6.10'
       Policies:
       - Version: '2012-10-17'
         Statement:
@@ -74,7 +74,7 @@ Resources:
     Type: 'AWS::Serverless::Function'
     Properties:
       Handler: 'buy-event-handler.analyze'
-      Runtime: 'nodejs4.3'
+      Runtime: 'nodejs6.10'
       Policies:
       - Version: '2012-10-17'
         Statement:
